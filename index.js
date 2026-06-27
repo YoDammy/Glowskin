@@ -54,7 +54,7 @@ bot.on('text', (ctx)=>{
 })
 bot.launch({
     webhook:{
-        domain: 'https://glowskin-production.up.railway.app',
+        domain: 'glowskin-production.up.railway.app',
         port: 3000
     }
 })
