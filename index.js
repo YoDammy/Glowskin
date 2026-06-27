@@ -22,7 +22,7 @@ async function addLeadToSheet(userId, email) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.SHEET_ID,
-    range: 'Sheet1!A:C',
+    range: 'glowskin _leads!A:C',
     valueInputOption: 'RAW',
     resource: {
       values: [[date, userId.toString(), email]]
