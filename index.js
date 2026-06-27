@@ -52,5 +52,10 @@ bot.on('text', (ctx)=>{
         ctx.reply('Sorry, something went wrong. Try again')
     })
 })
-bot.launch()
+bot.launch({
+    webhook:{
+        domain: 'https://glowskin-production.up.railway.app',
+        port: 3000
+    }
+})
 console.log('bot is running...')
