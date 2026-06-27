@@ -1,6 +1,7 @@
 const {Telegraf} = require('telegraf')
 const OpenAI = require('openai')
-
+const { google } = require('googleapis')
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS)
 require('dotenv').config()
 
 
@@ -8,6 +9,28 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 const ai = new OpenAI({apiKey:process.env.OPENAI_API_KEY})
 
 const chatHistory = {}
+
+async function addLeadToSheet(userId, email) {
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  })
+
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  const date = new Date().toLocaleDateString('en-GB');
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.SHEET_ID,
+    range: 'Sheet1!A:C',
+    valueInputOption: 'RAW',
+    resource: {
+      values: [[date, userId.toString(), email]]
+    }
+  });
+
+  console.log('Lead added to sheet:', email);
+}
 bot.command('start', (ctx)=>{
     ctx.reply('Welcome to Glowskin, how can i help?')
 })
@@ -36,17 +59,18 @@ bot.on('text', (ctx)=>{
             ...chatHistory[userId]
         ]
     })
-    .then((response)=>{
-        const reply = response.choices[0].message.content
-        chatHistory[userId].push({
-            role:'assistant', content: reply
-        })
-        ctx.reply(reply)
+ .then((response) => {
+    const reply = response.choices[0].message.content;
+    chatHistory[userId].push({ role: 'assistant', content: reply });
+    ctx.reply(reply);
 
-        if(userMessage.includes('@') && userMessage.includes('.')){
-            console.log(`NEW LEAD - USER ID: ${userId}, Email: ${userMessage} `)
-        }
-    })
+    if (userMessage.includes('@') && userMessage.includes('.')) {
+        console.log('NEW LEAD — User ID:', userId, '| Email:', userMessage);
+        addLeadToSheet(userId, userMessage)
+        .then(() => ctx.reply('Thanks! Our team will be in touch shortly.'))
+        .catch((err) => console.error('Sheet error:', err.message));
+    }
+})
     .catch((error)=>{
         console.error('AI_Error: ', error.message)
         ctx.reply('Sorry, something went wrong. Try again')
